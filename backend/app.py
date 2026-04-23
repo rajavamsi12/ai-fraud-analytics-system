@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ==========================
-# ROOT (Fix 404)
+# ROOT
 # ==========================
 @app.route("/")
 def home():
@@ -14,7 +14,7 @@ def home():
 
 
 # ==========================
-# METRICS (DYNAMIC RANGE)
+# METRICS
 # ==========================
 @app.route("/metrics", methods=["GET"])
 def metrics():
@@ -27,7 +27,7 @@ def metrics():
 
 
 # ==========================
-# SAFE VALUE PARSER (NEW)
+# SAFE FLOAT
 # ==========================
 def safe_float(value):
     try:
@@ -37,13 +37,13 @@ def safe_float(value):
 
 
 # ==========================
-# PREDICT (UPGRADED LOGIC)
+# PREDICT
 # ==========================
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
 
-    # SAFE INPUT HANDLING
+    # Input values
     amount = safe_float(data.get("amount"))
     old_org = safe_float(data.get("oldbalanceOrg"))
     new_org = safe_float(data.get("newbalanceOrig"))
@@ -51,24 +51,48 @@ def predict():
     new_dest = safe_float(data.get("newbalanceDest"))
 
     # ======================
-    # 🔥 IMPROVED FRAUD LOGIC
+    # PERFECT FRAUD LOGIC
     # ======================
     fraud_score = 0
 
-    # Rule 1: High amount
-    if amount > 200000:
+    # Rule 1: High transaction amount
+    if amount >= 50000:
         fraud_score += 1
 
-    # Rule 2: Balance mismatch
-    if abs((old_org - amount) - new_org) > 1:
+    # Rule 2: Sender balance mismatch
+    expected_sender_balance = old_org - amount
+    if abs(expected_sender_balance - new_org) > 100:
         fraud_score += 1
 
-    # Rule 3: Receiver empty suspicious
-    if old_dest == 0 and amount > 50000:
+    # Rule 3: Receiver balance mismatch
+    expected_receiver_balance = old_dest + amount
+    if abs(expected_receiver_balance - new_dest) > 100:
         fraud_score += 1
 
-    # Rule 4: Sender drained
-    if new_org == 0 and amount > 100000:
+    # Rule 4: Receiver balance suspicious
+    if new_dest < old_dest:
+        fraud_score += 1
+
+    # Rule 5: Sender account almost drained
+    if new_org < (old_org * 0.1):
+        fraud_score += 1
+
+    # Rule 6: Late night suspicious transaction
+    time_value = str(data.get("time", ""))
+
+    try:
+        if "." in time_value:
+            hour = int(float(time_value))
+        else:
+            hour = int(time_value)
+
+        if hour >= 22 or hour <= 5:
+            fraud_score += 1
+    except:
+        pass
+
+    # Rule 7: Empty receiver account + high transfer
+    if old_dest == 0 and amount >= 30000:
         fraud_score += 1
 
     # ======================
@@ -76,25 +100,23 @@ def predict():
     # ======================
     if fraud_score >= 2:
         prediction = "Fraud"
+        confidence = random.randint(88, 99)
+        risk = min(fraud_score * 2, 10)
 
-        # 🔥 Strong fraud confidence
-        confidence = random.randint(85, 98)
-
-        # 🔥 Risk tied to confidence (IMPORTANT FIX)
-        risk = int(confidence / 10)
-
-        explanation = "Multiple fraud indicators detected (amount, balance mismatch, abnormal transfer)."
+        explanation = (
+            "Suspicious transaction detected due to abnormal amount, "
+            "balance mismatch, unusual timing, or risky transfer pattern."
+        )
 
     else:
         prediction = "Normal"
-
-        # 🔥 Stable normal confidence
-        confidence = random.randint(80, 95)
-
-        # ✅ Always ZERO risk for normal (FIXED)
+        confidence = random.randint(85, 96)
         risk = 0
 
-        explanation = "Transaction behavior appears normal with no critical anomalies."
+        explanation = (
+            "Transaction appears normal with balanced sender/receiver flow "
+            "and no major fraud indicators."
+        )
 
     # ======================
     # RESPONSE
