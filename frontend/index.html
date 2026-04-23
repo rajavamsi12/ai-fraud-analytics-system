@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Fraud Dashboard</title>
+
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>AI FRAUD</h2>
+        <ul>
+            <li class="active">Dashboard</li>
+            <li onclick="location.href='history.html'">History</li>
+            <li onclick="location.href='login.html'">Logout</li>
+        </ul>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <h1>Transaction Dashboard</h1>
+
+        <!-- ================= FORM ================= -->
+        <div class="card">
+            <div class="grid">
+
+                <!-- LEFT -->
+                <div class="field">
+                    <label>Transaction Time</label>
+                    <input id="step" type="number" placeholder="Enter time">
+                </div>
+
+                <div class="field">
+                    <label>Transaction Type</label>
+                    <select id="type">
+                        <option value="0">PAYMENT</option>
+                        <option value="1">TRANSFER</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Transaction Amount</label>
+                    <input id="amount" type="number" placeholder="Enter amount">
+                </div>
+
+                <div class="field">
+                    <label>Sender Balance Before</label>
+                    <input id="oldbalanceOrg" type="number">
+                </div>
+
+                <div class="field">
+                    <label>Sender Balance After</label>
+                    <input id="newbalanceOrig" type="number">
+                </div>
+
+                <div class="field">
+                    <label>Receiver Balance Before</label>
+                    <input id="oldbalanceDest" type="number">
+                </div>
+
+                <div class="field">
+                    <label>Receiver Balance After</label>
+                    <input id="newbalanceDest" type="number">
+                </div>
+
+                <!-- 🔥 ADDED FIELD (FIXES 4+4 GRID) -->
+                <div class="field">
+                    <label>Status</label>
+                    <input value="Auto" disabled>
+                </div>
+
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="btn-group">
+                <button class="btn-primary" onclick="analyze()" id="btn">Analyze</button>
+                <button class="btn-success" onclick="autoNormal()">Normal</button>
+                <button class="btn-danger" onclick="autoFraud()">Fraud</button>
+                <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+            </div>
+
+            <div id="alertBox"></div>
+
+        </div>
+
+        <!-- RESULT -->
+        <div class="card">
+            <h2 id="result">Result: -</h2>
+            <p id="conf">Confidence: -</p>
+            <p id="risk">Risk Score: -</p>
+        </div>
+
+        <!-- AI -->
+        <div class="card">
+            <h3>AI Explanation</h3>
+            <p id="ai">Waiting for analysis...</p>
+        </div>
+
+        <!-- METRICS -->
+        <div class="card">
+            <h3>Model Performance</h3>
+            <div class="metrics">
+                <div><span>Accuracy</span><br><b id="acc">--</b></div>
+                <div><span>Precision</span><br><b id="prec">--</b></div>
+                <div><span>Recall</span><br><b id="rec">--</b></div>
+                <div><span>F1 Score</span><br><b id="f1">--</b></div>
+            </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts">
+            <div class="chart-box"><canvas id="c1"></canvas></div>
+            <div class="chart-box"><canvas id="c2"></canvas></div>
+            <div class="chart-box"><canvas id="c3"></canvas></div>
+            <div class="chart-box"><canvas id="c4"></canvas></div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/main.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/autofill.js"></script>
+
+</body>
+</html>

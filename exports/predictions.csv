@@ -1,0 +1,3 @@
+time,step,type,amount,oldbalanceOrg,newbalanceOrig,oldbalanceDest,newbalanceDest,prediction,confidence
+2026-04-21 17:14:08.823927,1,1,500000,600000,0,0,500000,Fraud,85.0
+2026-04-21 18:19:01.905904,1,0,500,10000,9500,2000,2500,Normal,1.0
