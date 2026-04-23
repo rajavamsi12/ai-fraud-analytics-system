@@ -143,15 +143,17 @@ app = Flask(__name__)
 CORS(app)
 
 # ==========================
-# ROOT
+# ROOT API
 # ==========================
 @app.route("/")
 def home():
-    return jsonify({"status": "AI Fraud Backend Running"})
+    return jsonify({
+        "status": "AI Fraud Backend Running Successfully"
+    })
 
 
 # ==========================
-# METRICS
+# METRICS API
 # ==========================
 @app.route("/metrics", methods=["GET"])
 def metrics():
@@ -164,7 +166,7 @@ def metrics():
 
 
 # ==========================
-# SAFE FLOAT
+# SAFE FLOAT FUNCTION
 # ==========================
 def safe_float(value):
     try:
@@ -174,21 +176,25 @@ def safe_float(value):
 
 
 # ==========================
-# PREDICT
+# PREDICT API
 # ==========================
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
 
-    # Input values
+    # ======================
+    # INPUT VALUES
+    # ======================
     amount = safe_float(data.get("amount"))
     old_org = safe_float(data.get("oldbalanceOrg"))
     new_org = safe_float(data.get("newbalanceOrig"))
     old_dest = safe_float(data.get("oldbalanceDest"))
     new_dest = safe_float(data.get("newbalanceDest"))
+    transaction_type = str(data.get("type", ""))
+    time_value = str(data.get("time", ""))
 
     # ======================
-    # PERFECT FRAUD LOGIC
+    # FRAUD SCORE LOGIC
     # ======================
     fraud_score = 0
 
@@ -206,17 +212,15 @@ def predict():
     if abs(expected_receiver_balance - new_dest) > 100:
         fraud_score += 1
 
-    # Rule 4: Receiver balance suspicious
+    # Rule 4: Receiver suspicious decrease
     if new_dest < old_dest:
         fraud_score += 1
 
     # Rule 5: Sender account almost drained
-    if new_org < (old_org * 0.1):
+    if old_org > 0 and new_org < (old_org * 0.1):
         fraud_score += 1
 
     # Rule 6: Late night suspicious transaction
-    time_value = str(data.get("time", ""))
-
     try:
         if "." in time_value:
             hour = int(float(time_value))
@@ -232,39 +236,50 @@ def predict():
     if old_dest == 0 and amount >= 30000:
         fraud_score += 1
 
+    # Rule 8: CASH_OUT or TRANSFER are more risky
+    if transaction_type.upper() in ["TRANSFER", "CASH_OUT"]:
+        fraud_score += 1
+
     # ======================
-    # FINAL DECISION
+    # FINAL PREDICTION
     # ======================
     if fraud_score >= 2:
         prediction = "Fraud"
         confidence = random.randint(88, 99)
-        risk = min(fraud_score * 2, 10)
+        risk_score = min(fraud_score * 2, 10)
 
         explanation = (
-            "Suspicious transaction detected due to abnormal amount, "
-            "balance mismatch, unusual timing, or risky transfer pattern."
+            "Suspicious transaction detected due to high amount, "
+            "balance mismatch, risky transfer pattern, unusual timing, "
+            "or abnormal account behavior."
         )
 
     else:
         prediction = "Normal"
         confidence = random.randint(85, 96)
-        risk = 0
+        risk_score = 0
 
         explanation = (
-            "Transaction appears normal with balanced sender/receiver flow "
-            "and no major fraud indicators."
+            "Transaction appears normal with balanced sender and receiver flow, "
+            "and no major fraud indicators detected."
         )
 
     # ======================
-    # RESPONSE
+    # FINAL RESPONSE
     # ======================
     return jsonify({
         "prediction": prediction,
         "confidence": confidence,
-        "risk_score": risk,
+        "risk_score": risk_score,
+        "transaction_amount": amount,
+        "transaction_type": transaction_type,
+        "fraud_score": fraud_score,
         "explanation": explanation
     })
 
 
+# ==========================
+# RUN APP
+# ==========================
 if __name__ == "__main__":
     app.run(debug=True)
